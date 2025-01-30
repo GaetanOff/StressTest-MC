@@ -1,0 +1,10 @@
+node_modules
+logs
+tests
+.git
+.idea
+DS_Store
+.DS_Store
+.dockerignore
+Dockerfile
+README.md

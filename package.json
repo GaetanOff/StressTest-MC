@@ -1,0 +1,40 @@
+{
+  "name": "stress-test-mc",
+  "version": "1.0.0",
+  "description": "A load testing tool for Minecraft servers based on Mineflayer and YAML scenarios.",
+  "main": "index.js",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest --transformIgnorePatterns []"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "mineflayer": "^4.26.0",
+    "mineflayer-pathfinder": "^2.4.5",
+    "socks": "^2.8.3"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.26.7",
+    "@jest/globals": "^29.7.0",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0"
+  },
+  "babel": {
+    "presets": ["@babel/preset-env"]
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.js$": "babel-jest"
+    }
+  },
+  "keywords": [
+    "minecraft",
+    "mineflayer",
+    "bots",
+    "testing",
+    "load-testing"
+  ],
+  "author": "GaetanDev.fr"
+}

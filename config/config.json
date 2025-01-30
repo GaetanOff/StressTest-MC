@@ -1,0 +1,21 @@
+{
+  "botJoinDelay": 500,
+  "defaultServer": {
+    "host": "play.example.com",
+    "port": 25565,
+    "version": "1.20.1"
+  },
+  "proxy": {
+    "enabled": false,
+    "list": [
+      { "host": "proxy1.com", "port": 1080 },
+      { "host": "proxy2.com", "port": 1080 },
+      { "host": "proxy3.com", "port": 1080 }
+    ],
+    "maxRetries": 3
+  },
+  "logging": {
+    "enabled": true,
+    "level": "info"
+  }
+}

@@ -1,0 +1,38 @@
+name: "Stress Test - Exploration and Chat"
+numberOfBots: 60  # Total number of bots to spawn
+
+server:
+  host: "play.example.com"
+  port: 25565
+
+event:
+  onJoin:
+    execute: "/help"  # Command executed as soon as the bot joins
+    wait: 2s          # Wait 2 seconds before executing the next actions
+
+actions:
+  move-group:
+    type: move
+    position:
+      x: 100
+      y: 65
+      z: 200
+    speed: normal  # slow, normal, fast
+    waitAfter: 5s  # Waiting time after reaching the destination
+
+  send-messages:
+    type: chat
+    messages:
+      - "Hello everyone!"
+      - "Anyone up for a game?"
+      - "I'm a bot, but a friendly one 🤖"
+    interval: 10s  # Time between each message
+
+  interact-block:
+    type: interact
+    target:
+      x: 105
+      y: 65
+      z: 205
+    action: "right_click"  # Can be "left_click" or "right_click"
+    delay: 3s  # Time before interaction
