@@ -1,4 +1,5 @@
 import { logger } from "../utils/logger.js";
+import { Vec3 } from "vec3";
 
 /**
  * Moves the bot to a given position.
@@ -47,7 +48,7 @@ export function sendMessages(bot, messages, interval = 10000) {
  * @param {string} action - "right_click" or "left_click"
  */
 export function interactWithBlock(bot, target, action = "right_click") {
-    const block = bot.blockAt(bot.vec3(target.x, target.y, target.z));
+    const block = bot.blockAt(new Vec3(target.x, target.y, target.z));
 
     if (!block) {
         logger.error(`❌ ${bot.username} could not find a block at ${target.x}, ${target.y}, ${target.z}`);
