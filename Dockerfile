@@ -1,11 +1,11 @@
-FROM node:23-alpine
+FROM oven/bun:latest
 
 WORKDIR /app
 
 COPY package.json ./
 
-RUN npm install --production
+RUN bun install
 
 COPY . .
 
-CMD ["npm", "start"]
+CMD ["bun", "run", "src/index.js"]
