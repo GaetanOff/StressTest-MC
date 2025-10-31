@@ -117,9 +117,5 @@ export async function createBotInstance(botName, serverConfig) {
     // Create the Mineflayer bot
     const bot = mineflayer.createBot(botOptions);
 
-    bot.on("login", () => logger.info(`✅ ${bot.username} has connected!`));
-    bot.on("error", (err) => logger.error(`❌ Error for ${bot.username}: ${err.message}`));
-    bot.on("end", () => logger.warn(`🔴 ${bot.username} has disconnected`));
-
     return bot;
 }
