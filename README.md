@@ -4,6 +4,7 @@
 ## **📌 Features**
 ✅ **Simulates Minecraft bots** (joining, movement, chat, interactions...)  
 ✅ **Easy configuration using YAML scenarios**  
+✅ **Multi-threading support** (configurable number of threads for better performance)  
 ✅ **Supports SOCKS5 proxies** (optional activation)  
 ✅ **Advanced logging system** (`logs/bot.log`)  
 ✅ **Automatic reconnection** (to be implemented if needed)  
@@ -33,15 +34,19 @@ npm install
 ## **⚙️ Configuration**
 The **`config/config.json`** file allows you to adjust project settings.
 
+### **Configuration options:**  
+- **`botJoinDelay`** (number): Delay in milliseconds between bot connections (default: 500ms)
+- **`threads`** (number): Number of worker threads to use for bot management (default: 1)
+  - Use `1` for single-threaded execution (original behavior)
+  - Use `> 1` to enable multi-threading and improve performance with many bots
+- **`proxy`**: Proxy configuration for SOCKS5 proxies
+- **`logging`**: Logging configuration (enable/disable and log level)
+
 ### **Example configuration:**  
 ```json
 {
   "botJoinDelay": 500,
-  "defaultServer": {
-    "host": "play.example.com",
-    "port": 25565,
-    "version": "1.20.1"
-  },
+  "threads": 3,
   "proxy": {
     "enabled": false,
     "list": [
@@ -56,6 +61,8 @@ The **`config/config.json`** file allows you to adjust project settings.
   }
 }
 ```
+
+**📌 Note:** The server configuration (host, port, version) is defined in each scenario YAML file, not in `config.json`.
 
 ---
 
@@ -113,7 +120,16 @@ node src/index.js scenario-1.yml
 ```
 📌 If no scenario is specified, **`scenario-1.yml`** will be used by default.
 
-### **2️⃣ Enable proxies**
+### **2️⃣ Configure multi-threading**
+To improve performance when launching many bots, you can configure multiple threads in **`config.json`**:
+```json
+{
+  "threads": 4  // Launch bots across 4 threads
+}
+```
+The bots will be automatically distributed across the specified number of threads. Each bot will be named `Bot-ThreadNumber-LocalNumber` (e.g., `Bot-1-1`, `Bot-1-2`, `Bot-2-1`, etc.).
+
+### **3️⃣ Enable proxies**
 In **`config.json`**, set `"enabled": true` under `"proxy"`:
 ```json
 "proxy": {
@@ -169,9 +185,11 @@ mc-load-tester/
 │
 │── src/
 │   ├── bots/
-│   │   ├── botManager.js       # 🎮 Bot management
+│   │   ├── botManager.js       # 🎮 Bot management & multi-threading
 │   │   ├── botFactory.js       # 🏗️ Bot creation
 │   │   ├── botActions.js       # 🔧 Bot actions
+│   │   ├── botLifecycle.js     # 🔄 Shared bot lifecycle functions
+│   │   ├── worker.js           # 🧵 Worker thread handler
 │   ├── scenario/
 │   │   ├── scenarioManager.js  # 📜 Scenario execution
 │   │   ├── scenarioParser.js   # 📝 YAML parsing
@@ -190,12 +208,22 @@ mc-load-tester/
 ## **📄 Logs**
 Logs are recorded in **`logs/bot.log`**.  
 
-Example:
+Example (single-threaded):
 ```
 [2025-01-30T07:57:39.999Z] [INFO] 🚀 Launching 60 bots...
 [2025-01-30T07:57:40.000Z] [INFO] 🤖 Creating bot: Bot_1
 [2025-01-30T07:57:40.001Z] [INFO] ✅ Bot_1 has connected!
 [2025-01-30T07:57:42.005Z] [INFO] 💬 Bot_1 says: "Hello everyone!"
+```
+
+Example (multi-threaded):
+```
+[2025-01-30T07:57:39.999Z] [INFO] 🚀 Launching 60 bots...
+[2025-01-30T07:57:39.999Z] [INFO] 🧵 Starting 60 bots across 3 threads (≈20 bots per thread)
+[2025-01-30T07:57:40.000Z] [INFO] [Thread 1] 🤖 Creating bot: Bot-1-1
+[2025-01-30T07:57:40.000Z] [INFO] [Thread 2] 🤖 Creating bot: Bot-2-1
+[2025-01-30T07:57:40.000Z] [INFO] [Thread 3] 🤖 Creating bot: Bot-3-1
+[2025-01-30T07:57:40.001Z] [INFO] [Thread 1] ✅ Bot-1-1 has connected!
 ```
 
 ---
