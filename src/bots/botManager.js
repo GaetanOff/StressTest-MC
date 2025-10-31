@@ -1,86 +1,98 @@
-import { createBotInstance } from "./botFactory.js";
-import { moveBot, sendMessages, interactWithBlock, executeCommand } from "./botActions.js";
+import { Worker } from "worker_threads";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 import { logger } from "../utils/logger.js";
-import { parseTime } from "../utils/helpers.js";
+import { createBotInstance } from "./botFactory.js";
+import { startBotsInRange } from "./botLifecycle.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 /**
  * Starts and manages multiple bots based on the scenario.
+ * Uses worker threads if threading is enabled in config.
  * @param {Object} scenario - The scenario loaded in JSON
  * @param {Object} config - The general project configuration
  */
 export async function startBots(scenario, config) {
-    const bots = [];
+    const numThreads = config.threads || 1;
 
-    for (let i = 0; i < scenario.numberOfBots; i++) {
-        const botName = `Bot_${i + 1}`;
-        logger.info(`🤖 Creating bot: ${botName}`);
-
-        const bot = await createBotInstance(botName, scenario.server);
-        bots.push(bot);
-
-        // Manage bot events
-        bot.on("spawn", () => handleBotJoin(bot, scenario));
-        bot.on("error", (err) => logger.error(`❌ Error for ${botName}: ${err.message}`));
-        bot.on("end", () => logger.warn(`🔴 ${botName} has disconnected`));
-
-        // Wait a short delay between connections to avoid overloading the server
-        await new Promise((resolve) => setTimeout(resolve, config.botJoinDelay || 500));
+    // If threading is disabled (1 thread), use the original single-threaded approach
+    if (numThreads === 1) {
+        await startBotsSingleThreaded(scenario, config);
+        return;
     }
 
-    logger.info(`✅ All ${scenario.numberOfBots} bots have been launched!`);
+    // Use multi-threading
+    const numberOfBots = scenario.numberOfBots;
+    const botsPerThread = Math.ceil(numberOfBots / numThreads);
+    const workers = [];
+    const workerPromises = [];
+
+    logger.info(`🧵 Starting ${numberOfBots} bots across ${numThreads} threads (≈${botsPerThread} bots per thread)`);
+
+    for (let threadId = 0; threadId < numThreads; threadId++) {
+        const startIndex = threadId * botsPerThread;
+        const endIndex = Math.min(startIndex + botsPerThread, numberOfBots);
+
+        // Skip threads with no bots assigned
+        if (startIndex >= numberOfBots) break;
+
+        const worker = new Worker(join(__dirname, "worker.js"), {
+            workerData: {
+                botRange: [startIndex, endIndex],
+                scenario,
+                config,
+                threadId: threadId + 1
+            }
+        });
+
+        workers.push(worker);
+
+        const workerPromise = new Promise((resolve, reject) => {
+            worker.on("message", (message) => {
+                if (message.success) {
+                    logger.info(`✅ Thread ${message.threadId} completed: ${message.botCount} bots launched`);
+                    resolve(message);
+                } else {
+                    logger.error(`❌ Thread ${message.threadId} failed: ${message.error}`);
+                    reject(new Error(message.error));
+                }
+            });
+
+            worker.on("error", (error) => {
+                logger.error(`❌ Thread ${threadId + 1} error: ${error.message}`);
+                reject(error);
+            });
+
+            worker.on("exit", (code) => {
+                if (code !== 0) {
+                    logger.error(`❌ Thread ${threadId + 1} exited with code ${code}`);
+                    reject(new Error(`Worker stopped with exit code ${code}`));
+                }
+            });
+        });
+
+        workerPromises.push(workerPromise);
+    }
+
+    // Wait for all threads to complete
+    try {
+        await Promise.all(workerPromises);
+        logger.info(`✅ All ${numberOfBots} bots have been launched across ${numThreads} threads!`);
+    } catch (error) {
+        logger.error(`❌ Error in multi-threading: ${error.message}`);
+        // Terminate all workers on error
+        workers.forEach((worker) => worker.terminate());
+        throw error;
+    }
 }
 
 /**
- * Handles actions when a bot joins the server.
- * @param {import("mineflayer").Bot} bot - The Mineflayer bot instance
- * @param {Object} scenario - The current scenario
+ * Starts bots in a single thread (original behavior).
+ * @param {Object} scenario - The scenario loaded in JSON
+ * @param {Object} config - The general project configuration
  */
-function handleBotJoin(bot, scenario) {
-    logger.info(`🎮 ${bot.username} has joined the server!`);
-
-    if (scenario.event && scenario.event.onJoin) {
-        const { execute, wait } = scenario.event.onJoin;
-        setTimeout(() => {
-            if (execute) {
-                executeCommand(bot, execute);
-            }
-            executeScenarioActions(bot, scenario.actions);
-        }, parseTime(wait || "0s"));
-    } else {
-        executeScenarioActions(bot, scenario.actions);
-    }
-}
-
-/**
- * Executes the actions defined in the scenario.
- * @param {import("mineflayer").Bot} bot - The Mineflayer bot instance
- * @param {Object} actions - List of actions from the scenario
- */
-function executeScenarioActions(bot, actions) {
-    for (const actionName in actions) {
-        const action = actions[actionName];
-
-        setTimeout(() => {
-            switch (action.type) {
-                case "move":
-                    logger.info(`🚶‍♂️ ${bot.username} is moving to ${JSON.stringify(action.position)} at ${action.speed} speed`);
-                    moveBot(bot, action.position, action.speed);
-                    break;
-                case "chat":
-                    logger.info(`💬 ${bot.username} is about to send messages`);
-                    sendMessages(bot, action.messages, parseTime(action.interval || "10s"));
-                    break;
-                case "interact":
-                    logger.info(`🖱️ ${bot.username} will interact with a block at ${JSON.stringify(action.target)} using ${action.action}`);
-                    interactWithBlock(bot, action.target, action.action);
-                    break;
-                case "command":
-                    logger.info(`⌨️ ${bot.username} executes command: ${action.command}`);
-                    executeCommand(bot, action.command);
-                    break;
-                default:
-                    logger.warn(`⚠️ Unknown action: ${action.type}`);
-            }
-        }, parseTime(action.waitAfter || "0s"));
-    }
+async function startBotsSingleThreaded(scenario, config) {
+    await startBotsInRange(0, scenario.numberOfBots, scenario, config, createBotInstance);
 }

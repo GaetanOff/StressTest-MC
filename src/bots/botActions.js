@@ -47,7 +47,7 @@ export function sendMessages(bot, messages, interval = 10000) {
  * @param {Object} target - Block coordinates {x, y, z}
  * @param {string} action - "right_click" or "left_click"
  */
-export function interactWithBlock(bot, target, action = "right_click") {
+export async function interactWithBlock(bot, target, action = "right_click") {
     const block = bot.blockAt(new Vec3(target.x, target.y, target.z));
 
     if (!block) {
@@ -59,8 +59,12 @@ export function interactWithBlock(bot, target, action = "right_click") {
         bot.activateBlock(block);
         logger.info(`🖱️ ${bot.username} right-clicked on ${block.name}`);
     } else if (action === "left_click") {
-        bot.dig(block);
-        logger.info(`⛏️ ${bot.username} broke ${block.name}`);
+        try {
+            await bot.dig(block);
+            logger.info(`⛏️ ${bot.username} broke ${block.name}`);
+        } catch (error) {
+            logger.error(`❌ ${bot.username} failed to dig block: ${error.message}`);
+        }
     }
 }
 

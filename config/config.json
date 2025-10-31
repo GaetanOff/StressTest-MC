@@ -1,10 +1,6 @@
 {
   "botJoinDelay": 500,
-  "defaultServer": {
-    "host": "play.example.com",
-    "port": 25565,
-    "version": "1.20.1"
-  },
+  "threads": 1,
   "proxy": {
     "enabled": false,
     "list": [
