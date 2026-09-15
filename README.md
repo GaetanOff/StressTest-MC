@@ -127,7 +127,7 @@ To improve performance when launching many bots, you can configure multiple thre
   "threads": 4  // Launch bots across 4 threads
 }
 ```
-The bots will be automatically distributed across the specified number of threads. Each bot will be named `Bot-ThreadNumber-LocalNumber` (e.g., `Bot-1-1`, `Bot-1-2`, `Bot-2-1`, etc.).
+The bots will be automatically distributed across the specified number of threads. Each bot will be named `Bot_ThreadNumber_LocalNumber` (e.g., `Bot_1_1`, `Bot_1_2`, `Bot_2_1`, etc.).
 
 ### **3️⃣ Enable proxies**
 In **`config.json`**, set `"enabled": true` under `"proxy"`:
@@ -220,10 +220,10 @@ Example (multi-threaded):
 ```
 [2025-01-30T07:57:39.999Z] [INFO] 🚀 Launching 60 bots...
 [2025-01-30T07:57:39.999Z] [INFO] 🧵 Starting 60 bots across 3 threads (≈20 bots per thread)
-[2025-01-30T07:57:40.000Z] [INFO] [Thread 1] 🤖 Creating bot: Bot-1-1
-[2025-01-30T07:57:40.000Z] [INFO] [Thread 2] 🤖 Creating bot: Bot-2-1
-[2025-01-30T07:57:40.000Z] [INFO] [Thread 3] 🤖 Creating bot: Bot-3-1
-[2025-01-30T07:57:40.001Z] [INFO] [Thread 1] ✅ Bot-1-1 has connected!
+[2025-01-30T07:57:40.000Z] [INFO] [Thread 1] 🤖 Creating bot: Bot_1_1
+[2025-01-30T07:57:40.000Z] [INFO] [Thread 2] 🤖 Creating bot: Bot_2_1
+[2025-01-30T07:57:40.000Z] [INFO] [Thread 3] 🤖 Creating bot: Bot_3_1
+[2025-01-30T07:57:40.001Z] [INFO] [Thread 1] ✅ Bot_1_1 has connected!
 ```
 
 ---
