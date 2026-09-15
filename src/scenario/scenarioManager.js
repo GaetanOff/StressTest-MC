@@ -4,7 +4,7 @@ import { logger } from "../utils/logger.js";
 /**
  * Loads a scenario file and validates its content.
  * @param {string} filePath - Path to the YAML file
- * @returns {Object} - Validated scenario
+ * @returns {Promise<Object>} - Validated scenario
  */
 export async function loadScenario(filePath) {
     const scenario = parseScenarioFile(filePath);
@@ -14,27 +14,39 @@ export async function loadScenario(filePath) {
 }
 
 /**
- * Checks if the scenario contains the essential information.
+ * Checks if the scenario contains all essential and valid information.
  * @param {Object} scenario - The JSON object of the scenario
+ * @throws {Error} if scenario is invalid
  */
-function validateScenario(scenario) {
-    try {
-        if (!scenario.name || typeof scenario.name !== "string") {
-            throw new Error("The scenario must have a valid 'name' field.");
-        }
-        if (!scenario.numberOfBots || typeof scenario.numberOfBots !== "number") {
-            throw new Error("The scenario must specify 'numberOfBots' (number of bots to create).");
-        }
-        if (!scenario.server || !scenario.server.host || !scenario.server.port) {
-            throw new Error("The scenario must include server information (host & port).");
-        }
-        if (!scenario.actions || typeof scenario.actions !== "object") {
-            throw new Error("The scenario must include 'actions'.");
-        }
-
-        logger.info(`✅ Validation successful for scenario "${scenario.name}".`);
-    } catch (error) {
-        logger.error(`❌ Scenario validation error: ${error.message}`);
-        process.exit(1);
+export function validateScenario(scenario) {
+    if (!scenario || typeof scenario !== "object") {
+        throw new Error("Scenario must be a valid object.");
     }
+    if (!scenario.name || typeof scenario.name !== "string" || scenario.name.trim().length === 0) {
+        throw new Error("The scenario must have a valid non-empty 'name' field.");
+    }
+    if (typeof scenario.numberOfBots !== "number" || scenario.numberOfBots <= 0 || !Number.isInteger(scenario.numberOfBots)) {
+        throw new Error("The scenario must specify 'numberOfBots' as a positive integer.");
+    }
+    if (!scenario.server || typeof scenario.server !== "object") {
+        throw new Error("The scenario must include a 'server' configuration object.");
+    }
+    if (!scenario.server.host || typeof scenario.server.host !== "string") {
+        throw new Error("The scenario server must include a valid 'host' string.");
+    }
+
+    const port = Number(scenario.server.port);
+    if (!Number.isInteger(port) || port < 1 || port > 65535) {
+        throw new Error("The scenario server must include a valid port (1-65535).");
+    }
+    scenario.server.port = port;
+
+    if (scenario.actions !== undefined) {
+        if (typeof scenario.actions !== "object" || scenario.actions === null || Array.isArray(scenario.actions)) {
+            throw new Error("The scenario 'actions' must be a valid object map of actions.");
+        }
+    }
+
+    logger.info(`✅ Validation successful for scenario "${scenario.name}".`);
 }
+

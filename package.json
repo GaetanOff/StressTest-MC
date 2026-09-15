@@ -2,9 +2,9 @@
   "name": "stress-test-mc",
   "version": "1.0.0",
   "description": "A load testing tool for Minecraft servers based on Mineflayer and YAML scenarios.",
-  "main": "index.js",
+  "main": "src/index.js",
   "type": "module",
-  "license": "MIT",
+  "license": "GPL-3.0-or-later",
   "scripts": {
     "start": "node src/index.js",
     "test": "jest --transformIgnorePatterns []"
